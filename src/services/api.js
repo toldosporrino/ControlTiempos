@@ -89,3 +89,8 @@ export async function resetearPin(nombre, pinNuevo, solicitantePin) {
 export async function cerrarSesionAjena(trabajador, solicitante) {
   return post({ accion: "cerrar_sesion", trabajador, solicitante });
 }
+
+// Análisis de pedidos (supervisor)
+export async function getAnalisisPedidos() {
+  return get({ accion: "analisis_pedidos" });
+}

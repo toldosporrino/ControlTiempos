@@ -18,6 +18,7 @@ import FicharScreen from "./src/screens/FicharScreen";
 import HistorialScreen from "./src/screens/HistorialScreen";
 import CambiarPinScreen from "./src/screens/CambiarPinScreen";
 import SupervisorScreen from "./src/screens/SupervisorScreen";
+import AnalisisPedidosScreen from "./src/screens/AnalisisPedidosScreen";
 
 const Stack = createStackNavigator();
 
@@ -80,6 +81,11 @@ function NavegacionPrincipal() {
             name="Supervisor"
             component={SupervisorScreen}
             options={{ title: "Panel Supervisor" }}
+          />
+          <Stack.Screen
+            name="AnalisisPedidos"
+            component={AnalisisPedidosScreen}
+            options={{ title: "Análisis Pedidos" }}
           />
         </>
       )}

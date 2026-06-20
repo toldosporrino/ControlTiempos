@@ -57,14 +57,12 @@ export default function LoginScreen() {
       return;
     }
 
-    const maxDigitos = 6; // supervisor puede tener 6
-    if (pin.length >= maxDigitos) return;
+    if (pin.length >= 4) return;
 
     const nuevoPin = pin + tecla;
     setPin(nuevoPin);
 
-    // Auto-submit cuando llegue a 4 o 6 dígitos
-    if (nuevoPin.length === 4 || nuevoPin.length === 6) {
+    if (nuevoPin.length === 4) {
       setTimeout(() => verificarPin(nuevoPin), 150);
     }
   }
@@ -152,14 +150,10 @@ export default function LoginScreen() {
 
       {/* Puntos del PIN */}
       <View style={styles.pinPuntos}>
-        {[0, 1, 2, 3, 4, 5].map(i => (
+        {[0, 1, 2, 3].map(i => (
           <View
             key={i}
-            style={[
-              styles.punto,
-              i < pin.length && styles.puntoRelleno,
-              i === 3 && styles.puntoSeparador
-            ]}
+            style={[styles.punto, i < pin.length && styles.puntoRelleno]}
           />
         ))}
       </View>

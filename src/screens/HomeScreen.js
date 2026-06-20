@@ -174,6 +174,16 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.btnAccionTexto}>Panel supervisor</Text>
             </TouchableOpacity>
           )}
+          {usuario.esSupervisor && (
+            <TouchableOpacity
+              style={[styles.btnAccion, styles.btnSupervisor]}
+              onPress={() => navigation.navigate("AnalisisPedidos")}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnAccionIcono}>📊</Text>
+              <Text style={styles.btnAccionTexto}>Análisis pedidos</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
       </ScrollView>
