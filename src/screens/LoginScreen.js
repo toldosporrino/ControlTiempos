@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { getTrabajadores, login } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { version } from "../../package.json";
 
 const { width } = Dimensions.get("window");
 
@@ -108,6 +109,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <Text style={styles.logo}>TOLDOS</Text>
           <Text style={styles.logoSub}>PORRIÑO</Text>
+          <Text style={styles.versionText}>v{version}</Text>
           <Text style={styles.titulo}>¿Quién eres?</Text>
         </View>
 
@@ -221,6 +223,12 @@ const styles = StyleSheet.create({
     color: "#E85D26",
     letterSpacing: 12,
     marginTop: -4,
+  },
+  versionText: {
+    color: "#444",
+    fontSize: 11,
+    marginTop: 6,
+    letterSpacing: 1,
   },
   titulo: {
     fontSize: 22,
