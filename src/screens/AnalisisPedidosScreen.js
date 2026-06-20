@@ -11,9 +11,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { getAnalisisPedidos } from "../services/api";
 
 const DPTOS = [
-  { key: "hConfeccion", label: "Confección", color: "#7C3AED" },
-  { key: "hTaller",     label: "Taller",     color: "#0369A1" },
-  { key: "hInstalacion", label: "Instalación", color: "#065F46" },
+  { key: "hConfeccion",  workerKey: "confeccion",  label: "Confección", color: "#7C3AED" },
+  { key: "hTaller",      workerKey: "taller",      label: "Taller",     color: "#0369A1" },
+  { key: "hInstalacion", workerKey: "instalacion", label: "Instalación", color: "#065F46" },
 ];
 
 export default function AnalisisPedidosScreen() {
@@ -21,6 +21,8 @@ export default function AnalisisPedidosScreen() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  // { "TP-001_confeccion": true, ... }
+  const [abiertos, setAbiertos] = useState({});
 
   useFocusEffect(
     useCallback(() => {
@@ -42,16 +44,20 @@ export default function AnalisisPedidosScreen() {
     }
   }
 
+  function toggleDpto(pedido, workerKey) {
+    const k = pedido + "_" + workerKey;
+    setAbiertos(prev => ({ ...prev, [k]: !prev[k] }));
+  }
+
   const filtrados = busqueda.trim()
     ? pedidos.filter(p => p.pedido.toLowerCase().includes(busqueda.toLowerCase()))
     : pedidos;
 
-  // Totales generales
   const totales = filtrados.reduce((acc, p) => ({
-    hConfeccion: acc.hConfeccion + p.hConfeccion,
-    hTaller: acc.hTaller + p.hTaller,
+    hConfeccion:  acc.hConfeccion  + p.hConfeccion,
+    hTaller:      acc.hTaller      + p.hTaller,
     hInstalacion: acc.hInstalacion + p.hInstalacion,
-    hTotal: acc.hTotal + p.hTotal,
+    hTotal:       acc.hTotal       + p.hTotal,
   }), { hConfeccion: 0, hTaller: 0, hInstalacion: 0, hTotal: 0 });
 
   function renderPedido({ item }) {
@@ -63,15 +69,55 @@ export default function AnalisisPedidosScreen() {
         </View>
 
         <View style={styles.deptos}>
-          {DPTOS.map(d => (
-            <View key={d.key} style={[styles.dptoChip, { backgroundColor: d.color + "22", borderColor: d.color + "55" }]}>
-              <Text style={[styles.dptoLabel, { color: d.color }]}>{d.label}</Text>
-              <Text style={[styles.dptoHoras, { color: d.color }]}>
-                {item[d.key] > 0 ? item[d.key].toFixed(1) + "h" : "—"}
-              </Text>
-            </View>
-          ))}
+          {DPTOS.map(d => {
+            const horas = item[d.key] || 0;
+            const workers = item.trabajadores?.[d.workerKey] || [];
+            const k = item.pedido + "_" + d.workerKey;
+            const expandido = !!abiertos[k];
+            const pulsable = horas > 0 && workers.length > 0;
+
+            return (
+              <TouchableOpacity
+                key={d.key}
+                style={[
+                  styles.dptoChip,
+                  { backgroundColor: d.color + "22", borderColor: expandido ? d.color : d.color + "55" },
+                  expandido && { borderWidth: 1.5 },
+                ]}
+                onPress={() => pulsable && toggleDpto(item.pedido, d.workerKey)}
+                activeOpacity={pulsable ? 0.7 : 1}
+              >
+                <Text style={[styles.dptoLabel, { color: d.color }]}>{d.label}</Text>
+                <Text style={[styles.dptoHoras, { color: d.color }]}>
+                  {horas > 0 ? horas.toFixed(1) + "h" : "—"}
+                </Text>
+                {pulsable && (
+                  <Text style={[styles.dptoFlecha, { color: d.color }]}>
+                    {expandido ? "▲" : "▼"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
+
+        {/* Desglose por trabajador */}
+        {DPTOS.map(d => {
+          const k = item.pedido + "_" + d.workerKey;
+          if (!abiertos[k]) return null;
+          const workers = item.trabajadores?.[d.workerKey] || [];
+          return (
+            <View key={k} style={[styles.desglose, { borderLeftColor: d.color }]}>
+              <Text style={[styles.desgloseTitle, { color: d.color }]}>{d.label}</Text>
+              {workers.map(w => (
+                <View key={w.nombre} style={styles.desgloseRow}>
+                  <Text style={styles.desgloseNombre}>{w.nombre}</Text>
+                  <Text style={[styles.desgloseHoras, { color: d.color }]}>{w.horas.toFixed(1)}h</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })}
 
         <Text style={styles.cardFecha}>Última actividad: {item.ultimaActividad}</Text>
       </View>
@@ -158,12 +204,7 @@ const styles = StyleSheet.create({
     borderColor: "#2A2A40",
     paddingHorizontal: 14,
   },
-  buscador: {
-    flex: 1,
-    color: "#FFF",
-    fontSize: 16,
-    paddingVertical: 12,
-  },
+  buscador: { flex: 1, color: "#FFF", fontSize: 16, paddingVertical: 12 },
   borrarBtn: { padding: 6 },
   borrarTexto: { color: "#666", fontSize: 16 },
 
@@ -210,8 +251,24 @@ const styles = StyleSheet.create({
   },
   dptoLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 0.5 },
   dptoHoras: { fontSize: 16, fontWeight: "800", marginTop: 2 },
+  dptoFlecha: { fontSize: 9, marginTop: 4, opacity: 0.8 },
 
-  cardFecha: { color: "#444", fontSize: 11, textAlign: "right" },
+  desglose: {
+    borderLeftWidth: 3,
+    paddingLeft: 12,
+    marginBottom: 10,
+    marginTop: 2,
+  },
+  desgloseTitle: { fontSize: 10, fontWeight: "700", letterSpacing: 1, marginBottom: 6 },
+  desgloseRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 3,
+  },
+  desgloseNombre: { color: "#CCC", fontSize: 13 },
+  desgloseHoras: { fontSize: 13, fontWeight: "700" },
+
+  cardFecha: { color: "#444", fontSize: 11, textAlign: "right", marginTop: 4 },
 
   vacio: { padding: 40, alignItems: "center" },
   vacioTexto: { color: "#666", fontSize: 15 },
